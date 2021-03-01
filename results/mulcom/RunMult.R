@@ -1,0 +1,9 @@
+filename pn pc hcount maxcost p_rhorn p_incrhorn timing
+mulcom004.cnf 75 192 154 157 81.77 1.95 0.01
+mulcom008.cnf 393 1098 840 884 80.51 5.24 1.19
+mulcom002.cnf 0 1 1 0 0.00 0.00 0.00
+mulcom001.cnf 0 1 1 0 0.00 0.00 0.00
+mulcom003.cnf 33 78 65 66 84.62 1.54 0.00
+mulcom005.cnf 132 351 276 285 81.20 3.26 0.03
+mulcom006.cnf 204 555 431 449 80.90 4.18 0.04
+mulcom007.cnf 291 804 619 649 80.72 4.85 0.39

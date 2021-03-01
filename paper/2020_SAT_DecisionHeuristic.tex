@@ -1,0 +1,462 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage{graphicx}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
+
+\RequirePackage{amsmath}
+\usepackage{algpseudocode}
+\usepackage[ruled,vlined,linesnumbered,noend]{algorithm2e}
+% global change
+\SetKwInput{KwData}{Input}
+\SetKwInput{KwResult}{Output}
+\usepackage{verbatim,amssymb,amsfonts,amscd,graphicx}
+\usepackage{bussproofs}
+\usepackage{color}
+\usepackage{times}
+\usepackage{placeins}
+\usepackage{thmtools}
+\usepackage[shortlabels]{enumitem} % added/updated by Ankit to cover no space enum
+\usepackage{cite}
+\usepackage{url}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage[justification=justified]{caption}
+\usepackage{multirow}
+\usepackage{xspace}
+\usepackage{multicol}
+
+\usepackage{xcolor,colortbl}
+
+
+\definecolor{gold}{rgb}{0.83, 0.69, 0.22}
+\definecolor{silver}{rgb}{0.75, 0.75, 0.75}
+\definecolor{bronze}{rgb}{0.8, 0.5, 0.2}
+
+
+\spnewtheorem{plaindefinition}{Definition}{\bfseries}{\normalfont}
+
+% GENERAL MACROS
+\def\hy{\hbox{-}\nobreak\hskip0pt} \newcommand{\ellipsis}{$\dots$}
+\newcommand{\SB}{\{\,} \newcommand{\SM}{\;{:}\;} \newcommand{\SE}{\,\}}
+\newcommand{\Card}[1]{|#1|}
+\newcommand{\red}{\color{red}}
+\newcommand{\blue}{\color{blue}}
+\renewcommand{\iff}{\Longleftrightarrow}
+
+% PAPER SPECIFIC MACROS
+\newcommand{\var}{\mathit{var}}
+\newcommand{\lit}{\mathit{lit}}
+\newcommand{\fff}{\varphi}
+\newcommand{\matrixf}{\phi}
+\newcommand{\dom}{\mathit{dom}}
+\newcommand{\qp}{\mathcal{Q}}
+\newcommand{\FFF}{\Phi}
+\newcommand{\GGG}{\Psi}
+\newcommand{\rightOf}{R}
+\newcommand{\Neg}[1]{\overline{#1}}
+\newcommand{\cc}[1]{Cl(#1)}
+\renewcommand{\P}{\mathcal{P}}
+\newcommand{\cls}{\mathcal{C}}
+
+\newcommand{\AAA}{\mathcal{A}} \newcommand{\BBB}{\mathcal{B}}
+\newcommand{\CCC}{\mathcal{C}} \newcommand{\DDD}{\mathcal{D}}
+\newcommand{\LLL}{\mathcal{L}} 
+\newcommand{\HHH}{\mathcal{H}}
+\newcommand{\MMM}{\mathcal{M}} \newcommand{\PPP}{\mathcal{P}}
+\newcommand{\QQQ}{\mathcal{Q}}\RequirePackage{amsmath}
+\newcommand{\SSS}{\mathcal{S}} \newcommand{\TTT}{\mathcal{T}}
+\newcommand{\VVV}{\mathcal{V}} \newcommand{\bigoh}{\mathcal{O}}
+\usepackage{xspace}
+% PAPER SPECIFIC MACROS
+\newcommand{\rhorn}{\mathsf{MRHorn}}
+\newcommand{\mrh}{\mathsf{MRH}}
+\newcommand{\dtheight}{\mathsf{DecisionTreeHeight}}
+\newcommand{\amo}{\textsf{AMO}}
+
+\def\maxrhorn{{\sf MaxRhorn}\xspace}
+\def\uprop{\mathsf{unitPropagation}}
+\def\dvar{\mathsf{decVariable}}
+\def\psel{\mathsf{phaseSelection}}
+%\def\dvar{\mathsf{decVar}}
+
+\usepackage{tikz}
+\usetikzlibrary{tikzmark,decorations.pathreplacing,arrows,shapes,positioning,shadows,trees,shapes.gates.logic.US,arrows.meta,shapes,automata,petri,calc}
+\usetikzlibrary{positioning}
+% ----------------- End of the macros
+
+\begin{document}
+%
+\title{Revisiting the Decision Heuristics for the Look-Ahead Based SAT Solvers\thanks{Supported by organization  XXX.}}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{Ankit Shukla\inst{1} \and Armin Biere\inst{1} \and Martina Seidl\inst{1}}
+%\orcidID{1111-2222-3333-4444}
+
+\authorrunning{A. Shukla et al.}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{JKU, Linz, Austria \\
+	\email{\{ankit.shukla, biere, martina.seidl\}@jku.at}}
+%
+\maketitle              % typeset the header of the contribution
+%
+\begin{abstract}
+We consider the problem of finding the largest renamable Horn sub-CNF ($\rhorn$) of a given CNF.
+
+\keywords{Renamable-Horn \and SAT \and Look ahead solvers.}
+\end{abstract}
+
+\section{Introduction} \label{sec:introduction}
+The look-ahead solvers use a completely different set of heuristics for the search compared to the CDCL solvers. These heuristics are used to gather information for better pertinence search spaces and decide the variable to branch. Look-ahead solvers are the first component of the cube-and-conquer paradigm and currently the best way to parallelize combinatorial problems. As seen in \cite{Heule18Schur} choosing the decision heuristic for hard combinatorial problems requires manual interaction. The process of selection of heuristic is not completely automatic and generally, the decision requires sampling instances and running a set of decision heuristics to figure out the appropriate one. We present a complete formalize method to automate this task. The process of automation might allow us to use more powerful decision heuristics. 
+
+We revisit the decision heuristics for the lookahead solvers, and introduce renamable-Horn heuristic; an extension of the Horn-heuristic used in the SAT solver SATO \cite{Zhang97Sato}. Although theoretically attractive, Horn-based heuristics has not been used in the SAT solver since \cite{Zhang97Sato}.
+
+The sampling part of our method is inspired by the recent success of the Monte Carlo tree search (MCTS) algorithm in combinatorial reasoning \cite{Browne2012, Jooken2020}, maximum satisfiability (MaxSAT), \cite{GoffinetR16} and constraint satisfaction problems (CSPs) \cite{Loth2013}.
+In the area of propositional satisfiability (SAT), the MCTS-based approach \cite{PrevitiRSS11, Schloeter2017} has been used to perform unit propagation \cite{DavisP60} and Conflict-Driven Clause Learning (CDCL) \cite{MoskewiczMZZM01}. The MCTS-based approaches target improved quality (``good") clause learning \cite{Schloeter2017, Keszocze2020} and guiding the CDCL search by random exploration \cite{Chowdhury19, Chowdhury2020} of the search tree.
+
+%%%Revisiting the decision heuristic. We are introducing a new look ahead heuristic. 
+%There are look-ahead heuristics that are different than CDCL approaches. Problems:
+%\begin{itemize}
+%	\item For hard combinatorial problems manual interaction is necessary. It's not completely automatic. 
+%	\item Sampling is done manually. Marijn runs few instances and then decides.
+%\end{itemize}
+%Why revisit that? It's completely mannual and by automating this we might be able to use more powerful decision heuristic, and we are looking at an extended version of Horn which is re-nameable Horn. 
+%We need to automate this. And first we need to come up with a formalize this thing. We do renamable Horn. 
+%Third is the Horn SAT angle. Since SATO has not been used in the solvers.
+%Marijn does this decision mannually for each specif instances or families based. We are planning to automate it.
+%Use Marijn's paper and show that it's he best way to parallelise  combonitorial problems. and requires mannual interjections. Best for solving hard combonitorial problems by parallelisation. 
+%combine MCTS inspired sampling-approach 
+
+%Here, we use MCTS inspired sampling-based approach with a new decision heuristic to estimate the hardness of UNSAT propositional formula. XXX
+
+\section{Preliminaries} \label{sec:preliminaries}
+The satisfiability problem, known as SAT, is a decision problem; given an input clausal formula $\FFF$, determines whether $\FFF$ is satisfiable, i.e., if there exists an interpretation that satisfies the given formula. SAT is an NP-complete problem \cite{Cook71} and, it is widely believed that no efficiently (polynomial-time) algorithm exists to solve SAT. Although, there are subclasses of satisfiability  with syntactic restrictions that are solvable in polynomial time, for example,  2-satisfiability (2SAT) and Horn-satisfiability (HORNSAT).
+
+The major approaches to exploit the special structure of the CNF which are polynomial time solvable, either reduce the instance by an application of a partial assignment to a polynomial-time solvable subclasses, or identify the sub-formula of the instance belonging to a polynomial-time solvable subclass.
+
+\paragraph{\textbf{Maximum renamable Horn CNFs}:}
+We consider the problem of finding the largest renamable Horn sub-CNF ($\rhorn$) of a given CNF, i.e. to find the largest sub-family $H \subseteq C$ of a given CNF $C$ such that $H$ is renamable Horn. This problem is NP-Hard.
+
+\section{Estimating the size of the branching subtree} \label{sec:sizetree}
+Early work by Knuth \cite{Knuth1975} attempted to predict the efficiency of a backtracking algorithm by estimating the size of the backtracking search tree. The size of a backtracking search tree was associated with the length of randomly sampled paths through the tree.
+
+We present a new method to sample paths through the backtracking search tree size for the UNSAT formulas. The selection of variable and its assignment is a Prover-Delayer game. The Prover and Delayer take turns; the Prover picks an unassigned variable, and Delayer assigns it value. The game terminates if the formula become false by the current assignment. We use the number of assigned variables as the measure for the tree size. The Prover (Delayer) attempts to minimize (maximize) this measure. After each player's turn, we allow unit propagation to imply unit variable assignments and reduce the formula further. The implied assignments of the variables do not contribute to the tree size measure criteria.
+
+We embed the $\rhorn$ based heuristic in the above method to choose the decision variable from the non-horn part. The game terminates when the formula becomes renameable horn.
+
+\section{Maximum renamable Horn Heuristic} \label{sec:renamable-horn}
+%We consider the problem of finding the largest renamable Horn sub-CNF ($\rhorn$) of a given CNF, i.e. to find the largest sub-family $H \subseteq C$ of a given CNF $C$ such that $H$ is renamable Horn. This problem is NP-Hard.
+
+%
+Based on $\rhorn$ we present our new decision heuristic, $\mrh$. The central idea of our heuristic is to compute a $\rhorn$ of the given CNF and choose a decision variable from the non-horn part of the formula, hence reducing it's size. Iterate the procedure until the whole formula becomes a nameable horn and therefore can be solved in polynomial time.
+The heuristic to chose a decision variable is decoupled from the algorithm of finding the $\rhorn$. 
+%
+%We propose to use centrality measure to select the decision variable.
+
+\subsection{MaxSAT translation of $\rhorn$} \label{subsec:maxsat-translation}
+
+We present a translation of the $\rhorn$ problem into a maximum satisfiability problem (MaxSAT). %Let's show the translation with the help of an example.
+The translation idea is based on the IP-formulation of the $\rhorn$ \cite{Boros99}. 
+
+\begin{example}\label{ex:ip-encoding}
+	Let us consider a clause $C = x_1 \lor x_2 \lor x_3$. The clause $C$ will become Horn if
+	at most one of the following events happen: ``$x_1$ is not flipped", ``$x_2$ is not flipped",
+	or ``$x_3$ is flipped". Correspondingly, $C$ will become a Horn clause if and only if
+	
+	\[\overline{f_1} + \overline{f_2} + f_3 \leq 1\]
+    
+    where each new variable $f_i$ represent the flipping of the corresponding variable $x_i$.
+\end{example}
+
+For $\cls = \{C_1, ..., C_n\}$ we get set of linear constraints $\{F_1, ..., F_n\}$ to solve. \\
+
+\noindent Next we present a partial MaxSAT translation of the $\rhorn$.
+\begin{enumerate}
+	\item We translate each of the $F_i, \,\, 1 \leq i \leq n$ constraint as \emph{at most one} constraint (\amo). The \amo\ constraint is true if at most one of the variables is assigned true. For example \ref{ex:ip-encoding} the translation will create \amo ($\neg f_1, \neg f_2,f_3$), similarly for rest of the constraints.
+	\item For each of the \amo\ constraint $F_i$ we use an additional switch variable $s_i$ as a part of the constraint by adding negation of the switch variable to each clause of the \amo. For example~\ref{ex:ip-encoding} the \amo\ will create three clauses: 
+	\[(f_1 \lor f_2) \land (f_1 \lor \neg f_3) \land (f_2 \lor \neg f_3)\]
+	we add the switch variable $\neg s_1$ to each of the three clauses.
+	\begin{equation}\label{eq:amo-s}
+		(\neg s_1 \lor f_1 \lor f_2) \land (\neg s_1 \lor f_1 \lor \neg f_3) \land (\neg s_1 \lor f_2 \lor \neg f_3)
+	\end{equation}
+	
+	We represent the \amo\ constraint with the switch variable as $\amo_s$.
+	\item We add each \amo\ with switch variable $\amo_s$ as a hard constraint (constraint with infinite weight) in MaxSAT. Note that every model of the MaxSAT problem must satisfy every hard constraints. 
+	\item Next, we add each $s_i$ to the MaxSAT with weight 1.
+	\item We then solve the MaxSAT problem to maximize the weights of switch variable $s_i, \,\, 1 \leq i \leq n$.
+\end{enumerate} 
+
+Note that the equation~\ref{eq:amo-s} and unit clause $s_1$ with their corresponding weights can be represented as 
+
+\begin{flalign}~\label{eg:maxsat-weights}
+(s_1 \supset (f_1 \lor f_2))^\infty
+ \land ( s_1 \supset (f_1 \lor \neg f_3))^\infty
+  \land (s_1 \supset (f_2 \lor \neg f_3))^\infty
+    \\
+(s_1)^1
+\end{flalign}
+
+setting $s_1$ = 1 will satisfy and enforce  \amo ($\neg f_1, \neg f_2,f_3$) to be \emph{true}.
+
+%\noindent Problems with the encoding:
+%
+%\begin{enumerate}
+%  \item There is no effort to get the non-horn part to be a set of shorter clause. Not optimal.
+%  \item What happens if the formula becomes Horn? XXX
+%\end{enumerate}
+
+\section{Algorithm} \label{sec:algorithm}
+%\begin{algorithm}[]
+%	
+%    1. Unit Constraint Propagation \\
+%    2. Decision-Heuristic application \\
+%    3. Variable selection: score(v) = score(+v) * score(-v) \\
+%    4. Phase selection \\
+%    5. DataStructureUpdate. GOTO 1. \\
+%    
+%	\caption{$\dtheight(\FFF)$} \label{algo:mrhorn}
+%\end{algorithm}
+
+
+\begin{algorithm}[t!]
+	\DontPrintSemicolon
+	\KwData{ $\phi = \{C_1, C_2, \dots, C_n\}$, $v$ = no.of vars}
+		%	 Existential assignment $\epsilon : E \to \{\top, \bot \} $,
+	\KwResult{$k$ = number of assigned variables}
+	$k = 0, lit = var = 0$ \;
+	\While{$  (v = k) \land (\phi \neq \textrm{UNSAT}) $} {  
+		$\uprop(\phi)$ \; 
+		\lIf{$\phi == \textrm{UNSAT}$} {skip}
+		$var = \dvar (\mrh, \phi)$ \;
+		$lit = \psel (var)$ \;
+		$k = k + 1$ \; 
+	    $\phi = {\phi|}_{lit}$	
+	}
+	return $k$ 
+	\caption{Estimate tree size based on sampling a path}
+	\label{algo:mrhorn}
+\end{algorithm}
+The algorithm progresses down a single path of the complete branching tree, similar to the simulation path of the Monte Carlo tree search. To avoid the making decision on the implied variables, first we perform unit propagation and update the formula. Then we check the satisfiability of the formula: in case the formula turned UNSAT we end the while loop and return the assigned variable count. There will be multiple implied variables due to unit propagation but we do not consider these variables as part of the complexity for the tree size.
+Next, we use our newly introduced look-ahead heuristic, $\mrh$, to pick the decision variable. Using a random phase selection, we decide on the phase of the selected variable. We increase the selected variable count and apply the literal application to the formula and continue. In case the formula is UNSAT, or the number of assigned variables equals the total number of variables in the formula we exist the loop and return the assigned variable count. The assigned variable count represents an abstracted size of the tree.
+\section{Experiments} \label{sec:experiments}
+We have implemented the the $\rhorn$ heuristic in a small codebase \maxrhorn \footnote{\textbf{https://github.com/arey0pushpa/dcnf-autarky}}. To evaluate the effectiveness of the heuristic, we implement and compare the performance of $\rhorn$ with four other decision heuristics, two DPLL based heuristics; Jeroslow-Wang and Max-Occurrence and two lookahead based heuristic, weighted binary heuristic (WBH) and clause reduction heuristic (CRH). The \maxrhorn includes 2,000 lines of C++ code.
+
+All the experiments were performed on the cluster where each compute node has
+two Intel Xeon E5-2620 v4 CPUs running at 2.10 GHz with turbo-mode disabled. Time limit was set to 2700 seconds and memory limit to 7 GB.
+
+
+\begin{table}[]
+	\centering
+	\resizebox{16cm}{!}{
+		%		\def\arraystretch{0.3}
+		\begin{tabular}{ l|c  c c c| c c c c | c c c c | c c c c | c c c c|}
+			\hline
+			{\multirow{2}{*}{Instances}} & 
+			\multicolumn{4}{c|} {Max Cls. Sat}  & 
+			\multicolumn{4}{c|} {Jeroslow-Wang} &
+			\multicolumn{4}{c|} {CRH (lookahead)}  &
+			\multicolumn{4}{c|} {WBH (lookahead)} &
+			\multicolumn{4}{c|} {Max RHorn}	\\
+			
+			%	\cline{2-9}
+			&  Min & Max & Mu  & Med & Min & Max & Mu  & Med &  Min & Max & Mu  & Med &  Min & Max & Mu  & Med & Min & Max & Mu  & Med \\\hline\hline
+			
+			add16 & 15 & 45 & 22.27 & 19 & 16 & 46 & 21.41 & 20 & 15 & 45 & 22.27 & 19 & 19 & 42 & 31.65 & 32 & 5 & 46 & 16.95 &  \cellcolor{gold}15 \\\cline{1-21}  
+			add32 & 31 & 84 & 37.93 & 35 & 32 & 81 & 37.89 & 36 & 31 & 84 & 37.97 & 35 & 39 & 79 & 61.61 & 65 & 5 & 80 & 27.55 & \cellcolor{gold}24 \\\cline{1-21}  
+			add64 & 63 & 133 & 69.27 & 67 & 64 & 128 & 69.73 & 68 & 63 & 133 & 69.37 & 67 & 80 & 153 & 116.41 & 122 & 5 & 154 & 46.33 & \cellcolor{gold}41 \\\cline{1-21}  
+			prime65537 & 14 & 15 & 14.91 & 15 & 12 & 18 & 14.80 & 15 & 14 & 28 & 14.91 & 15 & 3 & 53 & 8.88 & 8 & 1 & 21 & 2.97 & \cellcolor{gold}1 \\\cline{1-21} \hline\hline  
+			mulcom006 & 7 & 19 & 9.36 & 9 & 7 & 25 & 10.03 & 10 & 7 & 19 & 9.38 & 9 & 7 & 21 & 10.29 & 10 & 13 & 28 & 17.63 & 17 \\\cline{1-21}  
+			mulcom008 & 9 & 24 & 13.23 & 13 & 9 & 28 & 13.49 & 13 & 9 & 23 & 13.17 & 13 & 9 & 27 & 13.50 & 13 & 1 & 33 & 25.85 & 26 \\\cline{1-21}  
+			ph04 & 3 & 6 & 4.25 & 4 & 3 & 11 & 5.32 & 5 & 3 & 6 & 4.24 & 4 & 3 & 11 & 5.33 & 5 & 3 & 11 & 5.30 & 5 \\\cline{1-21}  
+			ph05 & 4 & 10 & 6.11 & 6 & 4 & 19 & 7.49 & 7 & 4 & 10 & 6.14 & 6 & 4 & 19 & 7.47 & 7 & 4 & 17 & 7.50 & 7 \\\cline{1-21}  
+			ph11 & 10 & 37 & 17.98 & 18 & 10 & 42 & 19.82 & 19 & 10 & 43 & 18.20 & 18 & 10 & 48 & 19.84 & 19 & 10 & 40 & 19.85 & 19 \\\cline{1-21}  
+			ph12 & 11 & 40 & 19.98 & 20 & 11 & 49 & 21.82 & 21 & 11 & 46 & 20.20 & 20 & 11 & 46 & 21.79 & 21 & 11 & 48 & 21.85 & 21 \\\cline{1-21}  
+			ph13 & 12 & 40 & 21.95 & 22 & 12 & 57 & 23.91 & 23 & 12 & 43 & 22.25 & 22 & 12 & 48 & 23.82 & 23 & 12 & 44 & 23.88 & 23 \\\cline{1-21}  
+			ph14 & 13 & 46 & 23.95 & 24 & 13 & 51 & 25.87 & 25 & 13 & 52 & 24.30 & 24 & 13 & 53 & 25.93 & 25 & 14 & 52 & 25.84 & 25 \\\cline{1-21}  
+			ph15 & 14 & 52 & 26.09 & 26 & 14 & 56 & 27.87 & 27 & 14 & 51 & 26.20 & 26 & 16 & 53 & 27.95 & 27 & 14 & 55 & 27.95 & 27 \\\cline{1-21}  
+			ph17 & 17 & 53 & 29.94 & 30 & 17 & 57 & 30.94 & 30 & 16 & 58 & 30.19 & 30 & 17 & 58 & 31.95 & 31 & 16 & 58 & 31.84 & 31 \\\cline{1-21}  
+			ph18 & 19 & 59 & 32.03 & 32 & 18 & 61 & 32.99 & 32 & 17 & 57 & 32.19 & 32 & 19 & 64 & 33.92 & 33 & 17 & 64 & 33.89 & 33 \\\cline{1-21}  
+			%		ph20 & 21 & 68 & 36.09 & 36 & 21 & 67 & 36.94 & 36 & 21 & 65 & 36.09 & 36 & 22 & 64 & 37.97 & 37 & & & & \\\cline{1-21}  
+			ph24 & 27 & 69 & 43.97 & 44 & 27 & 77 & 44.86 & 44 & 27 & 76 & 44.24 & 44 & 25 & 76 & 45.86 & 45 & 26 & 75 & 45.86 & 45 \\\cline{1-21}  
+			%ph25 & 27 & 79 & 45.98 & 45 & 28 & 80 & 47.07 & 47 & 27 & 76 & 46.03 & 46 & 29 & 85 & 47.99 & 48 & & & &  \\\cline{1-21}  
+			ph28 & 33 & 86 & 52.00 & 52 & 32 & 91 & 53.02 & 53 & 33 & 85 & 52.08 & 52 & 34 & 86 & 53.82 & 53 & 35 & 85 & 54.01 & 54 \\\cline{1-21}  
+			ph31 & 38 & 98 & 58.04 & 57 & 38 & 96 & 58.87 & 58 & 37 & 91 & 58.04 & 57 & 36 & 97 & 60.13 & 60 & 39 & 97 & 59.90 & 59 \\\cline{1-21}  
+			ph34 & 41 & 96 & 64.05 & 64 & 41 & 104 & 64.55 & 64 & 39 & 100 & 64.15 & 64 & 42 & 103 & 65.82 & 65 & 45 & 93 & 65.90 & 65 \\\cline{1-21}
+			%	ph35 & 42 & 104 & 66.03 & 66 & 40 & 100 & 66.42 & 66 & 42 & 109 & 66.08 & 66 & 42 & 103 & 67.84 & 67 & & & & \\\cline{1-21}  
+			%	ph38 & 48 & 104 & 71.94 & 71 & 47 & 112 & 72.45 & 72 & 45 & 112 & 72.07 & 72 & 47 & 115 & 74.00 & 74 & & & & \\\cline{1-21}  
+			sdiv5prop & 5 & 15 & 8.48 & 9 & 6 & 28 & 8.88 & 9 & 5 & 15 & 8.50 & 9 & 6 & 25 & 9.50 & 9 & 5 & 33 & 9.76 & 9 \\\cline{1-21}  
+			sdiv6prop & 6 & 19 & 9.75 & 10 & 6 & 29 & 9.97 & 10 & 6 & 21 & 9.77 & 10 & 7 & 24 & 10.81 & 11 & 5 & 36 & 11.06 & 11 \\\cline{1-21}  
+			tph02 & 2 & 3 & 2.50 & 2 & 2 & 3 & 2.50 & 3 & 2 & 3 & 2.50 & 2 & 2 & 3 & 2.51 & 3 & 2 & 3 & 2.51 & 3 \\\cline{1-21}  
+			tph05 & 8 & 25 & 13.75 & 14 & 8 & 28 & 14.38 & 14 & 8 & 25 & 13.73 & 14 & 8 & 30 & 14.49 & 14 & 8 & 31 & 15.62 & 15 \\\cline{1-21}  
+			tph08 & 15 & 46 & 26.12 & 26 & 14 & 50 & 25.83 & 25 & 14 & 46 & 25.87 & 26 & 15 & 52 & 26.70 & 26 & 14 & 61 & 27.85 & 27 \\\cline{1-21}  
+			tph13 & 28 & 82 & 46.46 & 46 & 27 & 77 & 45.72 & 45 & 28 & 71 & 45.82 & 45 & 26 & 76 & 46.81 & 46 & 29 & 78 & 47.97 & 48 \\\cline{1-21}  
+			tph17 & 41 & 98 & 62.69 & 62 & 38 & 99 & 61.73 & 61 & 38 & 95 & 61.90 & 61 & 38 & 99 & 62.75 & 62 & 42 & 94 & 63.60 & 63 \\\cline{1-21}  
+			udiv10prop & 11 & 26 & 11.83 & 11 & 10 & 48 & 12.34 & 10 & 11 & 26 & 11.84 & 11 & 10 & 40 & 13.19 & 12 & 10 & 50 & 19.43 & 16 \\\cline{1-21}  
+			%	udiv11prop & 12 & 27 & 12.87 & 12 & 11 & 49 & 13.94 & 12 & 12 & 31 & 12.94 & 12 & 11 & 51 & 14.37 & 13 & & & & \\\cline{1-21}  
+			udiv7prop & 8 & 20 & 8.70 & 8 & 7 & 36 & 9.03 & 8 & 8 & 20 & 8.72 & 8 & 7 & 38 & 9.29 & 8 & 7 & 43 & 15.26 & 13 \\\cline{1-21}  
+			udiv8prop & 9 & 24 & 9.78 & 9 & 8 & 41 & 10.59 & 9 & 9 & 20 & 9.76 & 9 & 8 & 38 & 10.51 & 9 & 8 & 49 & 16.97 & 14 \\\cline{1-21}  
+			udiv9prop & 10 & 24 & 10.82 & 10 & 9 & 51 & 11.31 & 10 & 10 & 24 & 10.85 & 10 & 9 & 42 & 12.11 & 11 & 6 & 51 & 18.16 & 15 \\\cline{1-21}  
+			uniqinv3prop & 2 & 9 & 3.44 & 3 & 3 & 5 & 4.24 & 4 & 2 & 9 & 3.43 & 3 & 2 & 8 & 4.26 & 5 & 3 & 5 & 4.25 & 4 \\\cline{1-21}  
+			uniqinv4prop & 3 & 11 & 5.28 & 5 & 5 & 8 & 6.21 & 6 & 3 & 11 & 5.26 & 5 & 4 & 15 & 6.63 & 6 & 3 & 9 & 5.85 & 6 \\\cline{1-21}  
+			uniqinv5prop & 4 & 16 & 7.16 & 7 & 7 & 11 & 8.22 & 8 & 4 & 15 & 7.15 & 7 & 5 & 20 & 8.53 & 8 & 3 & 15 & 7.40 & 8 \\\cline{1-21}  
+			uniqinv7prop & 6 & 22 & 10.37 & 11 & 7 & 16 & 12.07 & 12 & 6 & 22 & 10.40 & 11 & 7 & 30 & 11.44 & 11 & 3 & 25 & 10.48 & 12 \\\cline{1-21}  
+			\hline\hline
+			
+	\end{tabular} }
+	\caption{Sampling score of 10,000 runs of each decision heuristic}
+	\label{tab:dec-heuristic}
+\end{table}
+
+The selected benchmarks sets are from test suite of mellon, random 3-SAT instances, Marijn hard instance and structured instances. Table~\ref{tab:dec-heuristic} shows the comparison of all five selected heuristics on the mellon test suite. The $\rhorn$ heuristic performs best on the structured instances. First four instances in gold are the ones where $\rhorn$ overperform all other heuristic. 
+
+%the Mean (Mu) and Median (Med)
+%of the run of 10000 iteration with
+
+\begin{table}[]
+	\centering
+	\resizebox{14cm}{!}{
+		%		\def\arraystretch{0.3}
+		\begin{tabular}{ l|c  c c c| c c c c | c c c c | c c c c | c c c c|}
+			\hline
+			{\multirow{2}{*}{Instances}} & 
+			\multicolumn{4}{c|} {Max Cls. Sat}  & 
+			\multicolumn{4}{c|} {Jeroslow-Wang} &
+			\multicolumn{4}{c|} {CRH (lookahead)}  &
+			\multicolumn{4}{c|} {WBH (lookahead)} &
+			\multicolumn{4}{c|} {Max RHorn}	\\
+			
+			%	\cline{2-9}
+			&  Min & Max & Mu  & Med & Min & Max & Mu  & Med &  Min & Max & Mu  & Med &  Min & Max & Mu  & Med & Min & Max & Mu  & Med \\\hline\hline
+		 filler & 6 & 22 & 10.37 & 11 & 7 & 16 & 12.07 & 12 & 6 & 22 & 10.40 & 11 & 7 & 30 & 11.44 & 11 & 3 & 25 & 10.48 & 12 \\\cline{1-21}  
+			\hline\hline
+	\end{tabular} }
+	\caption{Sampling score of 10,000 runs of each decision heuristic on random instances}
+	\label{tab:random}
+\end{table}
+
+Table 2: Run on Random instances. XXX
+
+\begin{table}[]
+	\centering
+	\resizebox{14cm}{!}{
+		%		\def\arraystretch{0.3}
+		\begin{tabular}{ l|c  c c c| c c c c | c c c c | c c c c | c c c c|}
+			\hline
+			{\multirow{2}{*}{Instances}} & 
+			\multicolumn{4}{c|} {Max Cls. Sat}  & 
+			\multicolumn{4}{c|} {Jeroslow-Wang} &
+			\multicolumn{4}{c|} {CRH (lookahead)}  &
+			\multicolumn{4}{c|} {WBH (lookahead)} &
+			\multicolumn{4}{c|} {Max RHorn}	\\
+			
+			%	\cline{2-9}
+			&  Min & Max & Mu  & Med & Min & Max & Mu  & Med &  Min & Max & Mu  & Med &  Min & Max & Mu  & Med & Min & Max & Mu  & Med \\\hline\hline
+			filler & 6 & 22 & 10.37 & 11 & 7 & 16 & 12.07 & 12 & 6 & 22 & 10.40 & 11 & 7 & 30 & 11.44 & 11 & 3 & 25 & 10.48 & 12 \\\cline{1-21}  
+			\hline\hline
+	\end{tabular} }
+	\caption{Sampling score of 10,000 runs of each decision heuristic on random instances}
+	\label{tab:marijn}
+\end{table}
+
+
+Table \ref{tab:marijn}: Run on Marijn's hard instances. XXX
+%Hard instances by Marijn. Matrix benchmark?  \\
+%https://github.com/marijnheule/benchmarks
+
+
+Multiplication and Benchmarks. \\
+
+\begin{table}[]
+	\centering
+	\resizebox{14cm}{!}{
+		%		\def\arraystretch{0.3}
+		\begin{tabular}{ l|c  c c c| c c c c | c c c c | c c c c | c c c c|}
+			\hline
+			{\multirow{2}{*}{Instances}} & 
+			\multicolumn{4}{c|} {Max Cls. Sat}  & 
+			\multicolumn{4}{c|} {Jeroslow-Wang} &
+			\multicolumn{4}{c|} {CRH (lookahead)}  &
+			\multicolumn{4}{c|} {WBH (lookahead)} &
+			\multicolumn{4}{c|} {Max RHorn}	\\
+			
+			%	\cline{2-9}
+			&  Min & Max & Mu  & Med & Min & Max & Mu  & Med &  Min & Max & Mu  & Med &  Min & Max & Mu  & Med & Min & Max & Mu  & Med \\\hline\hline
+			filler & 6 & 22 & 10.37 & 11 & 7 & 16 & 12.07 & 12 & 6 & 22 & 10.40 & 11 & 7 & 30 & 11.44 & 11 & 3 & 25 & 10.48 & 12 \\\cline{1-21}  
+			\hline\hline
+	\end{tabular} }
+	\caption{Sampling score of 10,000 runs of each decision heuristic on random instances}
+	\label{tab:structured}
+\end{table}
+
+
+Table \ref{tab:structured}: Run on structured instances. XXX
+%The top 4 entries shows that the structural formula can be efficiently solved by the max R horn heuristic. Can you give more empirical confidence whether this is true?
+%\\
+%On structural formulas (in yellow in the table) the rhorn is useful but useless as they can be solved by multiplier \\.
+%
+%Check for the prime examples. Look at the cluster in the tmp directory of the cluster.
+%
+%/home/biere/sc2017-submission \\
+
+\subsection{Average height tun time correlation}
+Update the code to show the average decision tree height corresponds to the run time. Sum up the time of sampling for the correlation. This experiment should be performed on the run of the solver on each 10000 instances.
+
+\subsection{Correctness}
+Check for the programming mistake. Heuristic bugs. Add Logging and verbose messages.
+% Stare at the solvers are doing and see if that should not be the case. Perform sanity check with the RHORN encoders.
+%Golden Algorithm. XXX
+   
+\subsection{CDCL can solve $\rhorn$ easily}
+ If the formula is horn or renamable horn CDCL will just find it and solve it easily. Put in the paper. Empirical study where CDCL can solve HORN formula. This is an argument for Cube and Conquer but we just do just Look-Ahead. 
+ 
+ Quote "Actually from Oliver's 2013 paper and 2014 JAR article.
+ There is a Schlipf et.al. paper IPL 1995 (also with John Franco) which introduced SLUR.  
+ SLUR: decides all those classes of formulas (even if you do not know that it falls in this class).  I looked at that before (actually was the editor in charge for the JAR paper by Oliver).  The SLUR algorithm is a strange DLL variant where you do look-ahead
+ and commit otherwise to decisions. If probing of both phases of variables does not lead to a conflict you commit to (an arbitrary) phase. If only one phase leads to a conflict you force the probing variable to the other phase.  If initially unit propagation gives a conflict
+ you determine UNSAT, otherwise if (after a decision - which is not in the paper) both phases of the probing yield a conflict, then you give up (because you committed to another decision earlier).  In the Franco DIMACS'96 paper he refers to Truemper claiming the two propagations can be interleaved/done-in-parallel which reduces the overall complexity to
+ linear (which I partially can follow only).  Anyhow, now to our problem.  If you get to the point in our cube and conquer algorithm where the formula becomes RHORN (or even one of those even larger classes they have which are motivated from LP relaxations), then doing the SLUR algorithm would give you indeed a linear algorithm for deciding the formula (does not give up but correctly either says UNSAT or  SAT). If you do DLL instead, then it still somewhat unclear what would happen (same for CDCL), but my conjecture is that the search space in DLL below this point can not be exponential. Here is my reasoning.  Let us say we pick decision variable X.  If unit propagation
+ on X leads to a conflict DLL does the same what SLUR does and forces X to false.  If SLUR at this point after propagating !X would not yield a conflict, then also this decision is something SLUR could also do.  So the remaining case is where we would pick X as decision, so branch on it, propagate it, and it does not lead to a conflict, while SLUR at this point
+ would also test the propagation of !X and detect a conflict.  In this case the SLUR algorithm would force X to true, which however has the same effect as our decision (setting X to true in the left branch).  So I would say DLL would simply solve or refute the formula in a linear number of decisions.  Now to CDCL.  This becomes more complicated since we back-jump, which however in the worse case only gives a linear blow-up (we will need to redo the assignments
+ we were jumping over), so in the worst case quadratic.  It might be interesting to look at chronological backtracking (Sibylle's last SAT paper based on the Intel work) in this case, since it avoids this quadratic blow-up of CDCL. If you are doing look-ahead with at least failed literal probing until completion instead of plain DLL or CDCL, then
+ of course this simulates SLUR completely.  Then however you usually invest linear time for the failed literal probing anyhow and thus would be able to afford testing this SLUR algorithm without real overhead ...."
+
+Check if this is the case by comparing the run times of the renamable horn formulas. Generate formulas that are renamable horn and run CDCL solver.\\
+
+If the formula is Horn we'll know that the formula is true. As we have already performed the unit propagation. If it is re-namable horn then we don't know this. Figuring out of the formula is RHorn is hard. SLUR related argument. That will give us the basis! \\ 
+
+\section{Related Work} \label{sec:relatedwork}
+XXX
+
+\section{Conclusion} \label{sec:conclusion}
+XXX
+
+%\noindent Possible explanation for Rhorn experiments:
+%\begin{enumerate}
+%	\item Buggy Code!! (Maybe. Check! small test cases passed)
+%	\item The sampling algorithm is actually not suitable. (Next Step?)
+%	\item Heuristic is weak. (Most Likely)
+%\end{enumerate} 
+%
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+
+ \bibliographystyle{splncs04}
+ \bibliography{Bibliographie}
+
+
+\end{document}

@@ -1,0 +1,9 @@
+filename pn pc hcount maxcost p_rhorn p_incrhorn timing
+sdiv2prop.cnf 60 154 118 126 81.82 6.78 0.01
+sdiv10prop.cnf 1454 4166 2991 3390 81.37 13.34 264.07
+sdiv3prop.cnf 132 351 261 287 81.77 9.96 0.02
+sdiv4prop.cnf 242 656 480 534 81.40 11.25 0.05
+sdiv5prop.cnf 379 1046 761 852 81.45 11.96 0.26
+sdiv6prop.cnf 542 1514 1097 1232 81.37 12.31 8.64
+sdiv7prop.cnf 731 2060 1488 1677 81.41 12.70 2.15
+sdiv9prop.cnf 1187 3386 2435 2756 81.39 13.18 105.53

@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: 2020_SAT_DecisionHeuristic.aux
+The style file: splncs04.bst
+Database file #1: Bibliographie.bib
+Warning--empty journal in Chowdhury19
+Warning--empty year in Chowdhury19
+You've used 16 entries,
+            2850 wiz_defined-function locations,
+            712 strings with 7203 characters,
+and the built_in function-call counts, 9882 in all, are:
+= -- 850
+> -- 267
+< -- 20
++ -- 114
+- -- 94
+* -- 600
+:= -- 1218
+add.period$ -- 31
+call.type$ -- 16
+change.case$ -- 113
+chr.to.int$ -- 0
+cite$ -- 18
+duplicate$ -- 878
+empty$ -- 905
+format.name$ -- 104
+if$ -- 2203
+int.to.chr$ -- 0
+int.to.str$ -- 16
+missing$ -- 172
+newline$ -- 54
+num.names$ -- 32
+pop$ -- 338
+preamble$ -- 1
+purify$ -- 79
+quote$ -- 0
+skip$ -- 298
+stack$ -- 0
+substring$ -- 615
+swap$ -- 486
+text.length$ -- 20
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 64
+warning$ -- 2
+while$ -- 86
+width$ -- 18
+write$ -- 170
+(There were 2 warnings)

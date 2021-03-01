@@ -1,0 +1,10 @@
+filename pn pc hcount maxcost p_rhorn p_incrhorn timing
+uniqinv3prop.cnf 57 120 96 103 85.83 7.29 0.01
+uniqinv7prop.cnf 349 912 708 751 82.35 6.07 0.11
+uniqinv2prop.cnf 24 42 33 38 90.48 15.15 0.00
+uniqinv4prop.cnf 106 246 195 206 83.74 5.64 0.01
+uniqinv5prop.cnf 171 420 330 349 83.10 5.76 0.02
+uniqinv6prop.cnf 252 642 501 530 82.55 5.79 0.18
+uniqinv8prop.cnf 462 1230 951 1010 82.11 6.20 31.70
+uniqinv9prop.cnf 591 1596 1230 1309 82.02 6.42 10.95
+uniqinv10prop.cnf 736 2010 1545 1646 81.89 6.54 52.89

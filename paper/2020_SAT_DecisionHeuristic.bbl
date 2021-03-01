@@ -1,0 +1,77 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{https://doi.org/#1}
+
+\bibitem{Boros99}
+Boros, E.: Maximum renamable horn sub-cnfs. Discret. Appl. Math.
+  \textbf{96-97},  29--40 (1999)
+
+\bibitem{Browne2012}
+Browne, C.B., Powley, E., Whitehouse, D., Lucas, S.M., Cowling, P.I.,
+  Rohlfshagen, P., Tavener, S., Perez, D., Samothrakis, S., Colton, S.: A
+  survey of monte carlo tree search methods. IEEE Transactions on Computational
+  Intelligence and AI in games  \textbf{4}(1),  1--43 (2012)
+
+\bibitem{Chowdhury2020}
+Chowdhury, M.S., M{\"u}ller, M., You, J.: Guiding cdcl sat search via random
+  exploration amid conflict depression. In: AAAI. pp. 1428--1435 (2020)
+
+\bibitem{Chowdhury19}
+Chowdhury, M.S., M{\"u}ller, M., You, J.H.: Exploration via random walks in
+  cdcl sat solving amid conflict depression
+
+\bibitem{Cook71}
+Cook, S.A.: The complexity of theorem-proving procedures. In: {STOC}. pp.
+  151--158. {ACM} (1971)
+
+\bibitem{DavisP60}
+Davis, M., Putnam, H.: A computing procedure for quantification theory. J.
+  {ACM}  \textbf{7}(3),  201--215 (1960)
+
+\bibitem{GoffinetR16}
+Goffinet, J., Ramanujan, R.: Monte-carlo tree search for the maximum
+  satisfiability problem. In: {CP}. Lecture Notes in Computer Science,
+  vol.~9892, pp. 251--267. Springer (2016)
+
+\bibitem{Heule18Schur}
+Heule, M.J.H.: Schur number five. In: {AAAI}. pp. 6598--6606. {AAAI} Press
+  (2018)
+
+\bibitem{Jooken2020}
+Jooken, J., Leyman, P., De~Causmaecker, P., Wauters, T.: Exploring search space
+  trees using an adapted version of monte carlo tree search for a combinatorial
+  optimization problem. arXiv preprint arXiv:2010.11523  (2020)
+
+\bibitem{Keszocze2020}
+Keszocze, O., Schmitz, K., Schloeter, J., Drechsler, R.: Improving sat solving
+  using monte carlo tree search-based clause learning. In: Advanced Boolean
+  Techniques, pp. 107--133. Springer (2020)
+
+\bibitem{Knuth1975}
+Knuth, D.E.: Estimating the efficiency of backtrack programs. Mathematics of
+  computation  \textbf{29}(129),  122--136 (1975)
+
+\bibitem{Loth2013}
+Loth, M., Sebag, M., Hamadi, Y., Schoenauer, M.: Bandit-based search for
+  constraint programming. In: International Conference on Principles and
+  Practice of Constraint Programming. pp. 464--480. Springer (2013)
+
+\bibitem{MoskewiczMZZM01}
+Moskewicz, M.W., Madigan, C.F., Zhao, Y., Zhang, L., Malik, S.: Chaff:
+  Engineering an efficient {SAT} solver. In: {DAC}. pp. 530--535. {ACM} (2001)
+
+\bibitem{PrevitiRSS11}
+Previti, A., Ramanujan, R., Schaerf, M., Selman, B.: Monte-carlo style {UCT}
+  search for boolean satisfiability. In: AI*IA. Lecture Notes in Computer
+  Science, vol.~6934, pp. 177--188. Springer (2011)
+
+\bibitem{Schloeter2017}
+Schloeter, J.: A monte carlo tree search based conflict-driven clause learning
+  sat solver. INFORMATIK 2017  (2017)
+
+\bibitem{Zhang97Sato}
+Zhang, H.: {SATO:} an efficient propositional prover. In: {CADE}. Lecture Notes
+  in Computer Science, vol.~1249, pp. 272--275. Springer (1997)
+
+\end{thebibliography}
