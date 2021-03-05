@@ -92,6 +92,7 @@ Check: AlphaZero for SAT. MTCS in SAT.
 #include <random>
 #include <set>
 #include <sstream>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
@@ -199,6 +200,7 @@ cld_t neg_wbh_score;
 cld_t kappa;
 std::string fname;
 std::string tmp_filename;
+std::string sat_out;
 unsigned long long nano_time;
 
 // std::random_device rd;
@@ -498,7 +500,8 @@ std::string getFileName(std::string filePath, bool withExtension = false,
         filePath.size() -
             (withExtension || dotPos != std::string::npos ? 1 : dotPos));
   }
-  return "";
+  // The file path is in current directory
+  return filePath;
 }
 
 void ReadDimacs(const std::string filename) {
@@ -596,7 +599,8 @@ void ReadDimacs(const std::string filename) {
     nano_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
                     std::chrono::system_clock::now().time_since_epoch())
                     .count();
-    tmp_filename = "/tmp/" + std::to_string(nano_time) + fname;
+    // Making a copy of the file in the tmp directory
+    tmp_filename = "/tmp/" + std::to_string(nano_time) + "." + fname;
     std::ifstream src(filename, std::ios::binary);
     std::ofstream dst(tmp_filename, std::ios::binary);
     dst << src.rdbuf();
@@ -821,7 +825,7 @@ std::string UnitConstraintPropogation() {
 // --------  Update the Clause Activity based on Max Renamable Horn ---
 std::string ClauseActivityUpdate() {
   // std::string fname = getFileName(filename);
-  std::string sat_out = "/tmp/" + std::to_string(nano_time) + fname + ".out";
+  sat_out = "/tmp/" + std::to_string(nano_time) + "." + fname + ".out";
   std::string cmd("../MaxSatRHorn.py -i ");
   cmd += tmp_filename;
   cmd += " -m 3";
@@ -942,7 +946,7 @@ void output(const std::string filename) {
   // std::cout << "c\nc Program information:\n";
   // std::cout << "c The Tree height is: " << assgn_vars.size() << "\n";
   std::cout << "c " << fname << " " << assgn_vars.size() << "\n";
-  std::exit(0);
+  // std::exit(0);
 }
 
 } // namespace
@@ -954,9 +958,9 @@ int main(const int argc, const char *const argv[]) {
     std::exit(code(Error::invalid_args_count));
   }
 
-  const std::string filename = argv[1];
+  const std::string filename = argv[2];
   if (argc == 3) {
-    heuristic = std::stoi(argv[2]);
+    heuristic = std::stoi(argv[1]);
   }
 
   if (filename == "-v" or filename == "--version")
@@ -1000,6 +1004,14 @@ int main(const int argc, const char *const argv[]) {
   }
 
   output(filename);
+
+  // Delete the temp files
+  if (remove(tmp_filename.c_str()) != 0 && remove(sat_out.c_str()) != 0) {
+    std::cout << "c Error deleting file. \n";
+    std::exit(code(Error::decision_error));
+  } else {
+    std::cout << "Temp Files successfully deleted";
+  }
 
   return 0;
 }

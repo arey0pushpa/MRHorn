@@ -153,13 +153,13 @@ def compute(input_path, encoding, mode):
     input_filename = input_path.split("/")[-1]
     hash_object = hashlib.md5(input_filename.encode())
     if mode == 1:
-        print("Input filename: ", input_filename)
+        print("c Input filename: ", input_filename)
         if encoding == 1:
-            print ("Encoding used for AMO: Binary Encoding")
+            print ("c Encoding used for AMO: Binary Encoding")
         elif encoding == 2:
-            print ("Encoding used for AMO: LOG Encoding")
+            print ("c Encoding used for AMO: LOG Encoding")
         else:
-            print ("Encoding used for AMO: Linear Encoding")
+            print ("c Encoding used for AMO: Linear Encoding")
 
     # Global variables
     wcnf_dimacs = []
@@ -328,6 +328,12 @@ def compute(input_path, encoding, mode):
         # for m in rc2.enumerate():
         #    print('model {0} has cost {1}'.format(m, rc2.cost))
     # [END print_solution]
+    ## Try to delete the file ##
+    try:
+        print ("c Deleting file: " + maxsat_path)
+        os.remove(maxsat_path)
+    except OSError as e:  ## if failed, report it back to the user ##
+        print ("c Error: %s - %s." % (e.filename, e.strerror))
 
 # [START main]
 def main():
@@ -369,7 +375,6 @@ def main():
             print("Please specify the input file [-i filename].")
         sys.exit(0)
     # [END parsing_args]
-
 
     compute(input_path, encoding, mode)
 # [END MAIN]
