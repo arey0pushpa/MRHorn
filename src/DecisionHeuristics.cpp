@@ -100,6 +100,10 @@ Check: AlphaZero for SAT. MTCS in SAT.
 #include <cassert>
 
 #define INT_MAX std::numeric_limits<int>::max()
+
+#define USE_INCOMPLETE_MAXSAT
+//#define USE_COMPLETE_MAXSAT
+
 namespace {
 // --- General input and output ---
 
@@ -134,7 +138,9 @@ enum class Error {
   decision_error = 22,
   formula_is_sat = 23,
   kappa_size_err = 24,
-  var_notin_clause = 25
+  var_notin_clause = 25,
+  output_format_violation = 26,
+  maxsat_failed = 27,
 };
 
 /* Extracting the underlying code of enum-classes (scoped enums) */
@@ -826,19 +832,33 @@ std::string UnitConstraintPropogation() {
 std::string ClauseActivityUpdate() {
   // std::string fname = getFileName(filename);
   sat_out = "/tmp/" + std::to_string(nano_time) + "." + fname + ".out";
-  std::string cmd("../MaxSatRHorn.py -i ");
+
+  std::string cmd = "";
+
+#ifdef USE_COMPLETE_MAXSAT
+  cmd += "../MaxSatRHorn.py -i ";
   cmd += tmp_filename;
   cmd += " -m 3";
+#endif // USE_COMPLETE_MAXSAT
+
+#ifdef USE_INCOMPLETE_MAXSAT
+  cmd += "timeout 120 ../Open-WBO-Inc/open-wbo-inc_static -no-complete -ca=1 "
+         "-c=100000 "
+         "-algorithm=6 ";
+  cmd += tmp_filename;
+#endif // USE_INCOMPLETE_MAXSAT
+
   cmd += " > ";
   cmd += sat_out;
+
   std::future<int> future = std::async(std::launch::async, [=]() {
     auto retVal = system(cmd.c_str());
     return retVal;
   });
 
   cl_t cls_assgn;
-  // std::cout << "c Running Max Renamable Horn solving ... "
-  //          << "\nc\n";
+  std::cout << "c Running Max Renamable Horn solving ... "
+            << "\nc\n";
   std::future_status status;
 
   status = future.wait_for(std::chrono::seconds(3000));
@@ -849,7 +869,9 @@ std::string ClauseActivityUpdate() {
     std::terminate();
   }
 
+#ifdef USE_COMPLETE_MAXSAT
   if (status == std::future_status::ready) {
+    std::cout << "c MAXSAT Call completed.\n";
     std::string filenm = sat_out;
     std::string line;
     std::ifstream file(filenm);
@@ -891,6 +913,66 @@ std::string ClauseActivityUpdate() {
       return "UNSAT";
     }
   }
+#endif // USE_COMPLETE_MAXSAT
+
+#ifdef USE_INCOMPLETE_MAXSAT
+  if (status == std::future_status::ready) {
+    std::cout << "c MAXSAT Call completed.\n";
+    std::string filenm = sat_out;
+    std::string line;
+    std::ifstream file(filenm);
+    cl_t cls_model;
+    bool sat_bit = false;
+    if (!file.is_open()) {
+      perror(("c Error while opening file " + filenm).c_str());
+      std::exit(code(Error::file_reading));
+    }
+    while (std::getline(file, line)) {
+      if (line[0] == 'c' || line[0] == 'o') {
+        continue;
+      } else if (line[0] == 's') {
+        sat_bit = true;
+        // Used to split string around spaces.
+        std::istringstream sss(line);
+        std::string word1;
+        sss >> word1 >> word1;
+        if (word1 != "SATISFIABLE") {
+          std::cerr << "c MAXSAT call failed. \n";
+          std::exit(code(Error::maxsat_failed));
+        }
+      } else if (line[0] == 'v') {
+        if (sat_bit == false) {
+          std::cout << "c The output filename is: " << sat_out << "\n";
+          std::cerr << "c Out format violation. \n";
+          std::exit(code(Error::output_format_violation));
+        }
+        cls_model = extract_jint(line);
+      }
+    }
+
+    var_t non_horn_cls = 0;
+    var_t cls_index = 0;
+    for (var_t i = 0; i < cls_model.size(); ++i) {
+      while (cnf_clauses[cls_index].active == 0) {
+        ++cls_index;
+      }
+      if (cls_model[i] < 0) {
+        cnf_clauses[cls_index].active = 2;
+        assert(active_cls > 0);
+        --active_cls;
+      } else {
+        ++non_horn_cls;
+      }
+      ++cls_index;
+    }
+
+    // assert(cls_index == no_of_clauses);
+    if (non_horn_cls == 0) {
+      unsat_bit = true;
+      return "UNSAT";
+    }
+  }
+#endif // USE_COMPLETE_MAXSAT
 
   const int r1 = remove(sat_out.c_str());
   if (r1 != 0) {
@@ -927,9 +1009,10 @@ void InputFileUpdate() {
 // --- Parse Commandline argument ---
 void show_usage() noexcept {
   std::cout << "Decision-Heuristics [version 0.0.1]. (C) Copyright 2020 "
-               "\nUsage: ./decision_heuristics [filename] [heuristic: 0 (max "
+               "\nUsage: ./decision_heuristics [heuristic] [filename]\n"
+            << "heuristic = 0 (max "
                "satisfiable clause), 1 (Jeoslow Wang), "
-               "2 (crh_lookahead), 3 (wbh Lookahead), 4 (Rhorn MaxSAT)]\n";
+               "2 (crh_lookahead), 3 (wbh Lookahead), 4 (Rhorn MaxSAT)\n";
   std::exit(0);
 }
 
@@ -954,19 +1037,38 @@ void output(const std::string filename) {
 int main(const int argc, const char *const argv[]) {
 
   if (argc == 1 || argc > 3) {
-    std::cout << "Invalid number of arguments.\n";
+    std::cout << "Invalid number of arguments. ";
+    std::cout << "Use -h for more information.\n";
     std::exit(code(Error::invalid_args_count));
   }
 
-  const std::string filename = argv[2];
+  const std::string firstArg = argv[1];
+
+  if (firstArg == "-v" or firstArg == "--version")
+    version_information();
+  if (firstArg == "-h" or firstArg == "--help")
+    show_usage();
+
+  if (argc == 2) {
+    std::cout << "Invalid number of arguments. ";
+    std::cout << "Use -h for more information.\n";
+    std::exit(code(Error::invalid_args_count));
+  }
+
+  char *end;
+  int correctInput = strtol(argv[1], &end, 10);
+
+  if (*end != '\0') {
+    std::cout << "Invalid argument. ";
+    std::cout << "Use -h for more information.\n";
+    return 1;
+  }
+
   if (argc == 3) {
     heuristic = std::stoi(argv[1]);
   }
 
-  if (filename == "-v" or filename == "--version")
-    version_information();
-  if (filename == "-h" or filename == "--help")
-    show_usage();
+  const std::string filename = argv[2];
 
   // banner();
 
@@ -1006,12 +1108,14 @@ int main(const int argc, const char *const argv[]) {
   output(filename);
 
   // Delete the temp files
-  if (remove(tmp_filename.c_str()) != 0 && remove(sat_out.c_str()) != 0) {
+  if (heuristic == 4 && remove(tmp_filename.c_str()) != 0 &&
+      remove(sat_out.c_str()) != 0) {
     std::cout << "c Error deleting file. \n";
     std::exit(code(Error::decision_error));
-  } else {
-    std::cout << "Temp Files successfully deleted";
   }
+  // else {
+  // std::cout << "Temp Files successfully deleted";
+  // }
 
   return 0;
 }
