@@ -30,6 +30,8 @@ import sys
 import math
 import time
 import hashlib
+import subprocess
+
 # [END import]
 
 def ERR(mode, t, input_filename, line):
@@ -100,7 +102,7 @@ def horn_cls(cls):
             tmp += 1
     return 1
 
-def compute(input_path, encoding, mode):
+def compute(input_path, encoding, mode, typee):
     # Pairwise ATMostOne Encoding. This will allow no new variable use for the encoding.
     # One to one mapping with the original input dimacs
     def pairwise_amo(varset, new_var):
@@ -248,7 +250,9 @@ def compute(input_path, encoding, mode):
         else:
             print_rline(input_filename, no_of_vars, no_of_cls, input_horn_cls_count, 0, 0, 0)
         sys.exit(0)
-
+    
+    if (typee != 1):
+        print("x "+ str(no_of_cls))
 
     # [END parse_dimacs] :
 
@@ -281,59 +285,66 @@ def compute(input_path, encoding, mode):
     # [END wcnf file]
 
     # [START MAX-SAT]
-    wcnf = WCNF(from_file=maxsat_path)
+    if (typee == 1): 
+        wcnf = WCNF(from_file=maxsat_path)
+    else:
+        cmd1 = ["timeout", "120", "../Open-WBO-Inc/open-wbo-inc_static", "-no-complete", "-ca=1", "-c=100000", "-algorithm=6", maxsat_path]
+        subprocess.call(cmd1)
     # [END MAX-SAT]
 
     if mode == 1:
         print ("Solving...\n")
 
     # [START print_solution]
-    with RC2(wcnf) as rc2:
-        opt_model = rc2.compute()
-        maxcost = no_of_cls - rc2.cost
-        p_rhorn = (maxcost / no_of_cls) * 100
-        if mode == 1:
-            print("The model is: ", opt_model)
-            print("The Maximum cost is: ", maxcost)
-            print("Percentage of RHorn in total: {0:.2f}".format(p_rhorn))
-            print("Total no.of horn clauses in input fml: ", input_horn_cls_count)
-        if input_horn_cls_count > 0:
-            p_rincr_horn = (
-                (maxcost - input_horn_cls_count) / input_horn_cls_count
-            ) * 100
-        else:
-            p_rincr_horn = 10000
-        if mode == 1:
-            print(
-                "Percenatge increase in Horn cls wrt input horn count: {0:.2f}".format(
-                    p_rincr_horn
+    if (typee == 1):
+        with RC2(wcnf) as rc2:
+            opt_model = rc2.compute()
+            maxcost = no_of_cls - rc2.cost
+            p_rhorn = (maxcost / no_of_cls) * 100
+            if mode == 1:
+                print("The model is: ", opt_model)
+                print("The Maximum cost is: ", maxcost)
+                print("Percentage of RHorn in total: {0:.2f}".format(p_rhorn))
+                print("Total no.of horn clauses in input fml: ", input_horn_cls_count)
+            if input_horn_cls_count > 0:
+                p_rincr_horn = (
+                    (maxcost - input_horn_cls_count) / input_horn_cls_count
+                ) * 100
+            else:
+                p_rincr_horn = 10000
+            if mode == 1:
+                print(
+                    "Percenatge increase in Horn cls wrt input horn count: {0:.2f}".format(
+                        p_rincr_horn
+                    )
                 )
-            )
-            print("Program took in total: " + str("{0:.2f}".format(time.time() - start_time)) + " s")
+                print("Program took in total: " + str("{0:.2f}".format(time.time() - start_time)) + " s")
 
-        if mode == 2:
-            print_rline(
-                input_filename,
-                no_of_vars,
-                no_of_cls,
-                input_horn_cls_count,
-                maxcost,
-                p_rhorn,
-                p_rincr_horn,
-            )
-        if (mode == 3):
-            cls_model = opt_model[-no_of_cls:]
-            print (str(cls_model)[1:-1])
+            if mode == 2:
+                print_rline(
+                    input_filename,
+                    no_of_vars,
+                    no_of_cls,
+                    input_horn_cls_count,
+                    maxcost,
+                    p_rhorn,
+                    p_rincr_horn,
+                )
+            if (mode == 3):
+                # take first number of clauses integers
+                cls_model = opt_model[-no_of_cls:]
+                print (str(cls_model)[1:-1])
 
-        # for m in rc2.enumerate():
-        #    print('model {0} has cost {1}'.format(m, rc2.cost))
-    # [END print_solution]
-    ## Try to delete the file ##
-    try:
-        print ("c Deleting file: " + maxsat_path)
-        os.remove(maxsat_path)
-    except OSError as e:  ## if failed, report it back to the user ##
-        print ("c Error: %s - %s." % (e.filename, e.strerror))
+            # for m in rc2.enumerate():
+            #    print('model {0} has cost {1}'.format(m, rc2.cost))
+        # [END print_solution]
+        ## Try to delete the file ##
+        try:
+            # print ("c Deleting file: " + maxsat_path)
+            os.remove(maxsat_path)
+        except OSError as e:  ## if failed, report it back to the user ##
+            print ("c Error: %s - %s." % (e.filename, e.strerror))
+
 
 # [START main]
 def main():
@@ -361,11 +372,15 @@ def main():
         default=1,
         help="Simple Run or Experimental mode. [1: Simple (default), 2: Experimental, 3: Solver Mode]",
     )
+    parser.add_argument(
+        "-t", "--type", type=int, default = 1, help="Complete or incomplete MaxSAT Selection."
+    )
     # Execute the parse_args() method
     args = parser.parse_args()
     input_path = args.path
     encoding = args.encoding
     mode = args.mode
+    typee = args.type
 
     # Fetch filename
     if not input_path:
@@ -376,7 +391,7 @@ def main():
         sys.exit(0)
     # [END parsing_args]
 
-    compute(input_path, encoding, mode)
+    compute(input_path, encoding, mode, typee)
 # [END MAIN]
 
 if __name__ == "__main__":

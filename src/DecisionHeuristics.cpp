@@ -104,6 +104,8 @@ Check: AlphaZero for SAT. MTCS in SAT.
 #define USE_INCOMPLETE_MAXSAT
 //#define USE_COMPLETE_MAXSAT
 
+#define REMOVE_SPACES(x) x.erase(std::remove(x.begin(), x.end(), ' '), x.end())
+
 namespace {
 // --- General input and output ---
 
@@ -835,17 +837,12 @@ std::string ClauseActivityUpdate() {
 
   std::string cmd = "";
 
-#ifdef USE_COMPLETE_MAXSAT
   cmd += "../MaxSatRHorn.py -i ";
   cmd += tmp_filename;
   cmd += " -m 3";
-#endif // USE_COMPLETE_MAXSAT
 
 #ifdef USE_INCOMPLETE_MAXSAT
-  cmd += "timeout 120 ../Open-WBO-Inc/open-wbo-inc_static -no-complete -ca=1 "
-         "-c=100000 "
-         "-algorithm=6 ";
-  cmd += tmp_filename;
+  cmd += " -t 2";
 #endif // USE_INCOMPLETE_MAXSAT
 
   cmd += " > ";
@@ -857,11 +854,12 @@ std::string ClauseActivityUpdate() {
   });
 
   cl_t cls_assgn;
+  int c_sz; // clause count in the modifies cnf file
   std::cout << "c Running Max Renamable Horn solving ... "
             << "\nc\n";
   std::future_status status;
 
-  status = future.wait_for(std::chrono::seconds(3000));
+  status = future.wait_for(std::chrono::seconds(1800));
 
   // Handle timout and chek for the MemoryOut
   if (status == std::future_status::timeout) {
@@ -880,6 +878,7 @@ std::string ClauseActivityUpdate() {
       perror(("c Error while opening file " + filenm).c_str());
       std::exit(code(Error::file_reading));
     }
+    // The output is written on
     while (std::getline(file, line)) {
       if (line[0] == 'S') {
         unsat_bit = true;
@@ -923,6 +922,7 @@ std::string ClauseActivityUpdate() {
     std::ifstream file(filenm);
     cl_t cls_model;
     bool sat_bit = false;
+    bool cls_bit = false;
     if (!file.is_open()) {
       perror(("c Error while opening file " + filenm).c_str());
       std::exit(code(Error::file_reading));
@@ -936,7 +936,9 @@ std::string ClauseActivityUpdate() {
         std::istringstream sss(line);
         std::string word1;
         sss >> word1 >> word1;
-        if (word1 != "SATISFIABLE") {
+        std::string sat("SATISFIABLE");
+        std::string opt("OPTIMUM");
+        if (word1 != sat && word1 != opt) {
           std::cerr << "c MAXSAT call failed. \n";
           std::exit(code(Error::maxsat_failed));
         }
@@ -946,13 +948,22 @@ std::string ClauseActivityUpdate() {
           std::cerr << "c Out format violation. \n";
           std::exit(code(Error::output_format_violation));
         }
-        cls_model = extract_jint(line);
+        cls_model = extract_jint(trim(line));
+      } else if (line[0] == 'x') {
+        cls_bit = true;
+        assert(extract_jint(trim(line)).size() == 1);
+        c_sz = extract_jint(trim(line))[0];
       }
+    }
+    if (sat_bit == false || cls_bit == false) {
+      std::cout << "c The output filename is: " << sat_out << "\n";
+      std::cerr << "c Out format violation. \n";
+      std::exit(code(Error::output_format_violation));
     }
 
     var_t non_horn_cls = 0;
     var_t cls_index = 0;
-    for (var_t i = 0; i < cls_model.size(); ++i) {
+    for (var_t i = 0; i < c_sz; ++i) {
       while (cnf_clauses[cls_index].active == 0) {
         ++cls_index;
       }
