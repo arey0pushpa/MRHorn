@@ -252,7 +252,7 @@ def compute(input_path, encoding, mode, typee):
         sys.exit(0)
     
     if (typee != 1):
-        print("x "+ str(no_of_cls))
+        print("x "+ str(no_of_vars) +  ' ' + str(no_of_cls))
 
     # [END parse_dimacs] :
 

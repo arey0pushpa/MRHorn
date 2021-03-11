@@ -40,8 +40,8 @@ async def process_csv(files, structure, dirpath, sem):
         Path(path).touch()
         file_dir = dirpath + '/' + files;
         with open(path, "w") as out:
-            for i in range(0,1000):
-                proc = await asyncio.create_subprocess_exec("./a.out", file_dir, "4", stdout = out)
+            for i in range(0,2):
+                proc = await asyncio.create_subprocess_exec("./a.out", "4", file_dir, stdout = out)
                 await proc.wait()
 
 async def main():

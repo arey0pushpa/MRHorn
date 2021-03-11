@@ -855,6 +855,7 @@ std::string ClauseActivityUpdate() {
 
   cl_t cls_assgn;
   int c_sz; // clause count in the modifies cnf file
+  int v_sz; // clause count in the modifies cnf file
   std::cout << "c Running Max Renamable Horn solving ... "
             << "\nc\n";
   std::future_status status;
@@ -951,8 +952,10 @@ std::string ClauseActivityUpdate() {
         cls_model = extract_jint(trim(line));
       } else if (line[0] == 'x') {
         cls_bit = true;
-        assert(extract_jint(trim(line)).size() == 1);
-        c_sz = extract_jint(trim(line))[0];
+        assert(extract_jint(trim(line)).size() == 2);
+        v_sz = extract_jint(trim(line))[0];
+        c_sz = extract_jint(trim(line))[1];
+        assert((v_sz + c_sz) == cls_model.size());
       }
     }
     if (sat_bit == false || cls_bit == false) {
@@ -963,7 +966,9 @@ std::string ClauseActivityUpdate() {
 
     var_t non_horn_cls = 0;
     var_t cls_index = 0;
-    for (var_t i = 0; i < c_sz; ++i) {
+    for (var_t i = 0; i < cls_model.size(); ++i) {
+      if (i < v_sz)
+        continue;
       while (cnf_clauses[cls_index].active == 0) {
         ++cls_index;
       }
@@ -983,7 +988,7 @@ std::string ClauseActivityUpdate() {
       return "UNSAT";
     }
   }
-#endif // USE_COMPLETE_MAXSAT
+#endif // USE_INCOMPLETE_MAXSAT
 
   const int r1 = remove(sat_out.c_str());
   if (r1 != 0) {
