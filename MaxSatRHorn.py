@@ -288,7 +288,7 @@ def compute(input_path, encoding, mode, typee):
     if (typee == 1): 
         wcnf = WCNF(from_file=maxsat_path)
     else:
-        cmd1 = ["timeout", "120", "../Open-WBO-Inc/open-wbo-inc_static", "-no-complete", "-ca=1", "-c=100000", "-algorithm=6", maxsat_path]
+        cmd1 = ["timeout", "20", "../Open-WBO-Inc/open-wbo-inc_static", "-no-complete", "-ca=1", "-c=100000", "-algorithm=6", maxsat_path]
         subprocess.call(cmd1)
     # [END MAX-SAT]
 

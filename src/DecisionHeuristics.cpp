@@ -651,12 +651,15 @@ std::string DataStructureUpdate(lit_t dvar) {
   cl_t sat_cls_set, unsat_cls_set;
   if (dvar == 0)
     std::exit(code(Error::variable_value));
+  // Unlear why this check is required
   if (cnf_variables[std::abs(dvar)].active == false) {
     return "NONE";
   }
+  // Remove the assigned variable from active vars
   cnf_variables[std::abs(dvar)].active = false;
   assert(active_vars > 0);
   --active_vars;
+  // Clauses where the variable occurs positive and negative
   if (dvar > 0) {
     sat_cls_set = cnf_variables[std::abs(dvar)].pos_occ_cls;
     unsat_cls_set = cnf_variables[std::abs(dvar)].neg_occ_cls;
@@ -668,6 +671,7 @@ std::string DataStructureUpdate(lit_t dvar) {
     if (cnf_clauses[c].active == 0) {
       continue;
     }
+    // If the decision var satisfies an active clause
     if (cnf_clauses[c].active == 1) {
       assert(active_cls > 0);
       --active_cls;
@@ -679,6 +683,7 @@ std::string DataStructureUpdate(lit_t dvar) {
     if (heuristic < 4) {
       formula_is_sat();
     } else {
+      // We do not handle SAT formula checking for heuristic 4 and 5
       unsat_bit = true;
       return "UNSAT";
     }
@@ -734,7 +739,7 @@ void UpdateVarStat(var_t heuristic) {
   std::fill(pos_var_cnt.begin(), pos_var_cnt.end(), 0);
   std::fill(neg_var_cnt.begin(), neg_var_cnt.end(), 0);
   // Recalculate the statistics again going over all the clauses -- Heuristics
-  // TODO: Avoid going over all clauses again and just have avtive clauses
+  // TODO: Avoid going over all clauses again and just have active clauses
   // TODO: Delete those clauses and variables which inactive : Save space
   var_t total_active_cls = 0;
   if (heuristic == 3) {
@@ -761,8 +766,8 @@ void UpdateVarStat(var_t heuristic) {
         } else if (heuristic == 2) {
           crh_lookahead(l, size - 1);
         } else if (heuristic >= 4) {
-          jeroslow_wang(l, size);
-          // max_sat_cls(l);
+          // jeroslow_wang(l, size);
+          max_sat_cls(l);
         }
       }
       assert(elem_cnt == size);
@@ -779,6 +784,8 @@ void RewriteInputFile() {
     std::exit(code(Error::file_reading));
   }
   // Writing the cnf output in dimacs format
+  // using no_of_vars can be dangereous from mapping the models from the SAT
+  // solver back. But in our case we only care about non-horn cls.
   fout << "p cnf " << no_of_vars << " " << active_cls << "\n";
   for (var_t i = 0; i < cnf_clauses.size(); ++i) {
     if (cnf_clauses[i].active == 0) {
@@ -823,10 +830,49 @@ std::string UnitConstraintPropogation() {
     return "UNSAT";
   if (heuristic < 4) {
     UpdateVarStat(heuristic);
-  } else {
+  } else if (heuristic == 4) { // For Renamable Horn
+    // If we are doing the iteration after an assignment or there was a unit
+    // clause rewrite the dummy_input file.
     if (assgn_vars.size() > 0 || ut == 1)
       RewriteInputFile();
   }
+  return "NONE";
+}
+
+// --------  Update the Horn Clause Activity based on Max Renamable Horn ---
+std::string HornClauseActivityUpdate() {
+  var_t non_horn_cls = 0;
+  for (var_t i = 0; i < cnf_clauses.size(); ++i) {
+    if (cnf_clauses[i].active == 0) {
+      continue;
+    }
+    int tmp_pos_cnt = 0;
+    for (int l : cnf_clauses[i].literals) {
+      if (l < 0)
+        continue;
+      else if (tmp_pos_cnt >= 1) {
+        ++tmp_pos_cnt;
+        break;
+      } else
+        ++tmp_pos_cnt;
+    }
+
+    if (tmp_pos_cnt <= 1) {
+      // Optimisation : If a clause is Horn then it'll remain horn
+      // cnf_clauses[i].active = 2;
+      cnf_clauses[i].active = 1;
+      --active_cls;
+    } else {
+      ++non_horn_cls;
+    }
+  }
+
+  // never happens: Remove
+  if (non_horn_cls == 0)
+    return "UNSAT";
+  else
+    UpdateVarStat(heuristic);
+
   return "NONE";
 }
 
@@ -999,7 +1045,7 @@ std::string ClauseActivityUpdate() {
 } // namespace
 
 // -- Write the input file for the next MAXSAT call ---
-void InputFileUpdate() {
+void RestoreHornPart() {
   while (unit_cls.size() > 0) {
     var_t cls = unit_cls[unit_cls.size() - 1];
     UnitPropagation(cls);
@@ -1097,9 +1143,11 @@ int main(const int argc, const char *const argv[]) {
     if (UnitConstraintPropogation() == "UNSAT")
       break;
 
-    if (heuristic == 4)
-      if (ClauseActivityUpdate() == "UNSAT")
-        break;
+    if (heuristic == 4 && ClauseActivityUpdate() == "UNSAT")
+      break;
+
+    if (heuristic == 5 && HornClauseActivityUpdate() == "UNSAT")
+      break;
 
     // 3. Variable selection: Pick the variable with highest score
     lit_t decision_var = VariableSelection();
@@ -1118,7 +1166,7 @@ int main(const int argc, const char *const argv[]) {
     assert(assgn_vars.size() <= no_of_vars);
 
     if (heuristic == 4)
-      InputFileUpdate();
+      RestoreHornPart();
   }
 
   output(filename);
@@ -1129,9 +1177,6 @@ int main(const int argc, const char *const argv[]) {
     std::cout << "c Error deleting file. \n";
     std::exit(code(Error::decision_error));
   }
-  // else {
-  // std::cout << "Temp Files successfully deleted";
-  // }
 
   return 0;
 }
