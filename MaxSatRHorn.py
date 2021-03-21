@@ -340,8 +340,9 @@ def compute(input_path, encoding, mode, typee):
         # [END print_solution]
         ## Try to delete the file ##
         try:
+            print ("Nachoo...")
             # print ("c Deleting file: " + maxsat_path)
-            os.remove(maxsat_path)
+        #    os.remove(maxsat_path)
         except OSError as e:  ## if failed, report it back to the user ##
             print ("c Error: %s - %s." % (e.filename, e.strerror))
 

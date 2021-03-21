@@ -843,14 +843,15 @@ std::string UnitConstraintPropogation() {
 std::string HornClauseActivityUpdate() {
   var_t non_horn_cls = 0;
   for (var_t i = 0; i < cnf_clauses.size(); ++i) {
-    if (cnf_clauses[i].active == 0) {
+    if (cnf_clauses[i].active != 1) {
       continue;
     }
     int tmp_pos_cnt = 0;
+
     for (int l : cnf_clauses[i].literals) {
-      if (l < 0)
+      if (cnf_variables[std::abs(l)].active == false || l < 0)
         continue;
-      else if (tmp_pos_cnt >= 1) {
+      if (tmp_pos_cnt >= 1) {
         ++tmp_pos_cnt;
         break;
       } else
@@ -859,8 +860,7 @@ std::string HornClauseActivityUpdate() {
 
     if (tmp_pos_cnt <= 1) {
       // Optimisation : If a clause is Horn then it'll remain horn
-      // cnf_clauses[i].active = 2;
-      cnf_clauses[i].active = 1;
+      cnf_clauses[i].active = 2;
       --active_cls;
     } else {
       ++non_horn_cls;
