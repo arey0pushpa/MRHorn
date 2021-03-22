@@ -1,25 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-# Copyright (C) 2018
-# Johannes Kepler University Linz, Austria
-# Institute for Formal Models and Verification
-# Armin Biere, Martina Seidl, Ankit Shukla
 
-## [TODO]
-# 1. Add better parsing.
-# 2. Add error handling in the program. use ASSERT.
-# 3. Pretty Printing:
-#   -  Better printing of the eqn and solution.
-#   -  More statistics
-# 4. Add test cases.
-
-# [START program]
-
-# [START import]
-# Import the linear solver wrapper
 from __future__ import print_function
-from ortools.sat.python import cp_model
-from google.protobuf import text_format
+from pulp import *
 
 import argparse
 import itertools
@@ -135,7 +118,8 @@ def main():
     p_line_seen = 0
 
     # [START solver]
-    model = cp_model.CpModel()
+    model =  LpProblem("MaxHorn", LpMaximize)
+    
     # [END solver]
 
     # [START parse_dimacs]
@@ -169,9 +153,10 @@ def main():
                 c = []
                 c_index = 0
                 for i in range(no_of_vars):
-                    x[i] = model.NewBoolVar("x_%i" % i)
+                    x[i] = LpVariable("x_%i" % i, cat='Binary')
+                    #model.NewBoolVar("x_%i" % i)
                 for j in range(no_of_cls):
-                    c.append(model.NewBoolVar("c_%i" % j))
+                    c.append( LpVariable("c_%i" % j, cat='Binary'))
                 # [END variables]
                 # assert (solver.NumVariables() == no_of_vars, "Achtung!!")
             else:
@@ -209,7 +194,7 @@ def main():
                 # print ("The Linear eqn is: ", lin_eq)
                 print ("Lin Eq : ", lin_eq)
                 print ("\n")
-                model.Add(lin_eq)
+                model += lin_eq
                 c_index += 1
                 # [END constraints]
 
@@ -240,61 +225,27 @@ def main():
     obj_func = 0
     for i in c:
         obj_func = obj_func + i
-    model.Maximize(obj_func)
+    model+= obj_func, "obj" 
     # [END objective]
 
     # [START solve]
-    solver = cp_model.CpSolver()
+    model.writeLP("MaxRHorn.lp")
+
+    model.solve(GLPK())
+
     if mode == 1:
         print("Solving...")
-    status = solver.Solve(model)
     # [END solve]
 
-    # [START print_solution]
-    if status == cp_model.OPTIMAL:
-        maxcost = solver.ObjectiveValue()
-        p_rhorn = (maxcost / no_of_cls) * 100
-        if mode == 1:
-            print("The Maximum cost is: ", maxcost)
-            print("Percentage of RHorn in total: {0:.2f}".format(p_rhorn))
-            print("Total no.of horn clauses in input fml: ", input_horn_cls_count)
-        if input_horn_cls_count > 0:
-            p_rincr_horn = (
-                (maxcost - input_horn_cls_count) / input_horn_cls_count
-            ) * 100
-        else:
-            p_rincr_horn = 10000
-        if mode == 1:
-            print(
-                "Percenatge increase in Horn cls wrt input horn count: {0:.2f}".format(
-                    p_rincr_horn
-                )
-            )
-            print("Program took in total: " + str("{0:.2f}".format(time.time() - start_time)) + " s")
-            # [START advanced]
-            print()
-            print("Statistics")
-            print("  - conflicts       : %i" % solver.NumConflicts())
-            print("  - branches        : %i" % solver.NumBranches())
-            print("  - wall time       : %f s" % solver.WallTime())
-            # print('  - solutions found : %i' % solution_printer.solution_count())
-            # [END advanced]
-        if mode == 2:
-            print_rline(
-                input_filename,
-                no_of_vars,
-                no_of_cls,
-                input_horn_cls_count,
-                maxcost,
-                p_rhorn,
-                p_rincr_horn,
-            )
+    # Print the status of the solved LP
+    print("Status:", LpStatus[model.status])
 
-        # print('Printing the model: ')
-        # for i in c:
-        #    print(' ', i, '=', solver.Value(i))
-    # [END print_solution]
+    # Print the value of the variables at the optimum
+    for v in model.variables():
+        print(v.name, "=", v.varValue)
 
+    # Print the value of the objective
+    print("objective=", value(model.objective))
 
 if __name__ == "__main__":
     start_time = time.time()
