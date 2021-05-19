@@ -34,6 +34,89 @@ Check: AlphaZero for SAT. MTCS in SAT.
  * 3. Integrate the approx. Max Sat varsion of MRhorn.
  * 4. Clean up the clause and variables. Memory saving.
  * 5. Run Heuristics on the Random Formulas.
+ *
+\section{TODO}
+
+\begin{enumerate}
+        \item Need a golden algorithm. Choose one of the heuristic and run till
+the completion. Possible for small examples and worth the exercise.
+Statistically we do not have any argument but we can just perform an experiment.
+        My hypothesis is : Negative! Have to show that the fix point of the
+sampling is exactly what you would get.\\
+
+        Do we have any argument that it converges?	Increasing the sampling
+will converge it. Plot the graph. Need an argument that it converges to the
+exact value that
+
+    \item Create a code template to perform this. Run till completion.
+
+    \item Create a graph. X axis is the no of paths. Out of 10 k run sample 100
+run each and take the average of 10 instances and plot the graph. Unclear.
+Revisit this part.
+
+    \item We need total 3 contributions.
+       \begin{enumerate}
+         \item Sampling approach. Is this the strongest one? No have a
+         \item Revisit Horn Based Decision Heuristic.
+         \item MaxSAT usage to solve ranamable Horn.
+       \end{enumerate}
+
+    \item What is the artifact that we are selling? You want to say in the
+conclusion that we revisited the heuristic and "\maxrhorn is 2.4 times better."
+Can we measure that? Take average?
+
+    \item Point to the old work of Berd Becker and then say what are our
+restrictions and why are we doing it? Refer the paper. \\
+
+    Add story: The first competition of SAT in essence about the comparing the
+decision heuristics. Then with the even the GRASP and CHAFF we moved to other
+heuristics. Then lookahead heuristic story. The cube and conquer was the
+relivable of old way of doing SAT. Back in old days something was completely
+forgotten and got not being picked up. That is this Horn and renaming horn. Put
+this into intro. \\
+
+
+   We have to also argue that what we have done is correct for combining the
+heuristic. Why using multiplication instead of taking max (DLIS) makes sense, we
+can argue that multiplication is way better and this is what we should do.
+Although DLIS is just doing the multiplication in a sense. By taking the max of
+the both polarity. Our argument is that it is uniform way of combining the
+contribution of the individual literals. And we leave it as future work to how
+to combine it. \\
+
+
+   We can argue that why we don't have the Golden algorithm. using lookahead
+alone will not be able to solve the interesting benchmarks like matrix
+multiplication. Two of the multiplication was easier for the lookahead, are
+simple local search. \\
+
+   We can point out to the table 5. Top 2 are good for the look ahead of (may
+CDCL). ten below are good for the local search. CDCL can't solve the lower ones
+and local search can't solve upper ones. \\
+
+   SATZILLA Page 13 DPLL Probing Features:
+   34-38. Number of unit propagations: computed at
+   depths 1, 4, 16, 64 and 256.
+
+   39-40. Search space size estimate: mean depth to
+   contradiction, estimate of the log of number of nodes. \\
+
+   Read Branch and Bound estimate method paper. They want build a portfolio and
+use the finding the number of . We want to use it to in the different way.
+
+   We are using sampling in a different way. To engineer a better decision
+heuristic. Our way is better as we use it to investigate the method that do not
+exists. We do not have the black box version that they have on the paper.
+Figure 4. \\
+
+   Add the chapter in the Constraint Satisfaction. Handbook of CP.\\
+
+   We can claim that we can't do the Golden algorithm because the heuristic we
+are looking into is NP hard. we are playing with approximation. Although they
+can claim we are doing impractical stuff. Then we have to argue is something XXX
+
+
+\end{enumerate}
  */
 
 /*----------  Hypothesis -------------------------------------
